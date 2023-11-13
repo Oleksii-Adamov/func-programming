@@ -82,7 +82,7 @@ nextGeneration cities numberOfElites population = do
   let eliteTours = take numberOfElites sortedPopulation
   return (eliteTours ++ children)
 
--- Function to perform crossover (partially matched crossover, PMX)
+-- Function to perform crossover
 crossover :: [City] -> [Tour] -> IO [Tour]
 crossover _ [] = return []
 crossover _ [_] = return []
