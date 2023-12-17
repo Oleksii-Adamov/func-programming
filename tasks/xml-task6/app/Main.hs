@@ -22,8 +22,8 @@ bookToElement (Book cat t a y) =
     , unode "year" y
     ]
 
-createBooksXML :: IO ()
-createBooksXML = do
+createBooksXMLWithDTD :: IO ()
+createBooksXMLWithDTD = do
   let bookstore = unode "bookstore" (map (Elem . bookToElement) books)
       doc = Element
               { elName = unqual "bookstore"
@@ -31,10 +31,22 @@ createBooksXML = do
               , elContent = [Elem bookstore]
               , elLine = Nothing
               }
-  writeFile "books.xml" (showElement doc)
-  putStrLn "XML file 'books.xml' created successfully."
+      dtdContent =
+              "<!ELEMENT bookstore (book+)>" ++
+              "<!ELEMENT book (category, title, author, year)>" ++
+              "<!ELEMENT category (#PCDATA)>" ++
+              "<!ELEMENT title (#PCDATA)>" ++
+              "<!ELEMENT author (#PCDATA)>" ++
+              "<!ELEMENT year (#PCDATA)>"
+
+  writeFile "books.xml" $ unlines ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                                    ,"<!DOCTYPE bookstore SYSTEM \"bookstore.dtd\">"
+                                    ,showElement doc]
+
+  writeFile "bookstore.dtd" dtdContent
+
+  putStrLn "XML file 'books.xml' with DTD 'bookstore.dtd' created successfully."
 
 main :: IO ()
 main = do
-  createBooksXML
-  putStrLn "XML created"
+  createBooksXMLWithDTD
