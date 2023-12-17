@@ -192,6 +192,32 @@ instance Insertable Task where
           [[sqlId]] -> return $ Just (fromSql sqlId)
           _         -> return Nothing
 
+instance Retrievable Task where
+    getById conn id = do
+        stmt <- prepare conn "SELECT * FROM Tasks WHERE TaskID = ?"
+        execute stmt [toSql id]
+        result <- fetchRow stmt
+        return $ maybe Nothing (convertToTask . map fromSql) result
+
+    getAll conn = do
+        stmt <- prepare conn "SELECT * FROM Tasks"
+        execute stmt []
+        results <- fetchAllRows stmt
+        return $ mapMaybe (convertToTask . map fromSql) results
+
+convertToTask :: [SqlValue] -> Maybe Task
+convertToTask [sqlId, sqlStudentId, sqlTopicId, sqlDescription, sqlGrade] =
+    let maybeGrade = if sqlGrade == SqlNull
+                        then Nothing
+                        else Just (fromSql sqlGrade :: Int)
+    in Just Task
+        { taskID = fromSql sqlId
+        , taskStudentID = fromSql sqlStudentId
+        , taskTopicID = fromSql sqlTopicId
+        , taskDescription = fromSql sqlDescription
+        , taskGrade = maybeGrade
+        }
+convertToTask _ = Nothing
 
 gradeTask :: Connection -> Int -> Int -> IO ()
 gradeTask conn taskId grade = do
