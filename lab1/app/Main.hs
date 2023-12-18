@@ -3,6 +3,9 @@ import Database.HDBC.ODBC
 import Data.Time.Clock (UTCTime)
 import Data.Maybe (mapMaybe)
 import Data.Maybe (fromMaybe)
+import Data.Time
+import Data.Time.Format (defaultTimeLocale, parseTimeM)
+
 
 -- Define a class for insertable entities
 class Insertable a where
@@ -368,14 +371,42 @@ convertToAnswer [sqlId, sqlQuestionId, sqlTeacherId, sqlText] =
         }
 convertToAnswer _ = Nothing
 
+parseCustomDate :: String -> Maybe UTCTime
+parseCustomDate dateString = parseTimeM True defaultTimeLocale "%d.%m.%Y" dateString :: Maybe UTCTime
+
 runApp :: Connection -> IO ()
 runApp conn = do
     putStrLn "What would you like to do?"
     putStrLn "1. Insert a student"
     putStrLn "2. Get student by ID"
     putStrLn "3. Get all students"
-    putStrLn "4. Exit"
-    putStrLn "Enter your choice (1/2/3/4): "
+    putStrLn "4. Insert a teacher"
+    putStrLn "5. Get teacher by ID"
+    putStrLn "6. Get all teachers"
+    putStrLn "7. Insert a topic"
+    putStrLn "8. Get topic by ID"
+    putStrLn "9. Get all topics"
+    putStrLn "10. Insert a schedule"
+    putStrLn "11. Get schedule by ID"
+    putStrLn "12. Get all schedules"
+    putStrLn "13. Insert a task"
+    putStrLn "14. Grade a task"
+    putStrLn "15. Get task by ID"
+    putStrLn "16. Get all tasks"
+    putStrLn "17. Insert a material"
+    putStrLn "18. Get material by ID"
+    putStrLn "19. Get all materials"
+    putStrLn "20. Insert a question"
+    putStrLn "21. Get question by ID"
+    putStrLn "22. Update a question"
+    putStrLn "23. Get all questions"
+    putStrLn "24. Insert an answer"
+    putStrLn "25. Get answer by ID"
+    putStrLn "26. Update an answer"
+    putStrLn "27. Get all answers"
+    putStrLn "28. Exit"
+
+    putStrLn "Enter your choice (1-28): "
     choice <- getLine
 
     case choice of
@@ -414,9 +445,290 @@ runApp conn = do
             runApp conn
 
         "4" -> do
-            putStrLn "Exiting..."
-            disconnect conn
+            putStrLn "Enter teacher details:"
+            putStrLn "First Name: "
+            firstName <- getLine
+            putStrLn "Last Name: "
+            lastName <- getLine
+            putStrLn "Email: "
+            email <- getLine
+            putStrLn "Password: "
+            password <- getLine
 
+            let newTeacher = Teacher { teacherID = Nothing, teacherFirstName = firstName, teacherLastName = lastName, teacherEmail = email, teacherPassword = password }
+            insertedId <- insert conn newTeacher
+            case insertedId of
+                Just id -> putStrLn $ "Inserted teacher with ID: " ++ show id
+                Nothing -> putStrLn "Failed to insert teacher"
+            runApp conn
+
+        "5" -> do
+            putStrLn "Enter teacher ID: "
+            teacherIdStr <- getLine
+            let teacherId = read teacherIdStr :: Int
+            maybeTeacher <- getById conn teacherId :: IO (Maybe Teacher)
+            case maybeTeacher of
+                Just teacher -> putStrLn $ "Teacher details: " ++ show teacher
+                Nothing -> putStrLn "Teacher not found"
+            runApp conn
+
+        "6" -> do
+            teachers <- getAll conn :: IO [Teacher]
+            putStrLn "All teachers: "
+            mapM_ (putStrLn . show) teachers
+            runApp conn
+
+        "7" -> do
+            putStrLn "Enter topic details:"
+            putStrLn "Topic Title: "
+            title <- getLine
+            putStrLn "Topic Description: "
+            description <- getLine
+
+            let newTopic = Topic { topicID = Nothing, topicTitle = title, topicDescription = description }
+            insertedId <- insert conn newTopic
+            case insertedId of
+                Just id -> putStrLn $ "Inserted topic with ID: " ++ show id
+                Nothing -> putStrLn "Failed to insert topic"
+            runApp conn
+
+        "8" -> do
+            putStrLn "Enter topic ID: "
+            topicIdStr <- getLine
+            let topicId = read topicIdStr :: Int
+            maybeTopic <- getById conn topicId :: IO (Maybe Topic)
+            case maybeTopic of
+                Just topic -> putStrLn $ "Topic details: " ++ show topic
+                Nothing -> putStrLn "Topic not found"
+            runApp conn
+
+        "9" -> do
+            topics <- getAll conn :: IO [Topic]
+            putStrLn "All topics: "
+            mapM_ (putStrLn . show) topics
+            runApp conn
+
+        "10" -> do
+            putStrLn "Enter schedule details:"
+            putStrLn "Topic ID: "
+            topicIdStr <- getLine
+            let topicId = read topicIdStr :: Int
+
+            putStrLn "Teacher ID: "
+            teacherIdStr <- getLine
+            let teacherId = read teacherIdStr :: Int
+
+            putStrLn "Start Date: "
+            startDateStr <- getLine
+            let startDateMaybe = parseCustomDate startDateStr
+            let startDate = maybe (error "Invalid start date format") id startDateMaybe
+
+            putStrLn "End Date: "
+            endDateStr <- getLine
+            let endDateMaybe = parseCustomDate endDateStr
+            let endDate = maybe (error "Invalid end date format") id endDateMaybe
+
+            let newSchedule = Schedule { scheduleID = Nothing, scheduleTopicID = topicId, scheduleTeacherID = teacherId, scheduleStartDate = startDate, scheduleEndDate = endDate }
+            insertedId <- insert conn newSchedule
+            case insertedId of
+                Just id -> putStrLn $ "Inserted schedule with ID: " ++ show id
+                Nothing -> putStrLn "Failed to insert schedule"
+            runApp conn
+
+        "11" -> do
+           putStrLn "Enter schedule ID: "
+           scheduleIdStr <- getLine
+           let scheduleId = read scheduleIdStr :: Int
+           maybeSchedule <- getById conn scheduleId :: IO (Maybe Schedule)
+           case maybeSchedule of
+               Just schedule -> putStrLn $ "Schedule details: " ++ show schedule
+               Nothing -> putStrLn "Schedule not found"
+           runApp conn
+
+        "12" -> do
+           schedules <- getAll conn :: IO [Schedule]
+           putStrLn "All schedules: "
+           mapM_ (putStrLn . show) schedules
+           runApp conn
+        "13" -> do
+            putStrLn "Enter task details:"
+            putStrLn "Student ID: "
+            studentIdStr <- getLine
+            let studentId = read studentIdStr :: Int
+
+            putStrLn "Topic ID: "
+            topicIdStr <- getLine
+            let topicId = read topicIdStr :: Int
+
+            putStrLn "Description: "
+            description <- getLine
+
+            let newTask = Task { taskID = Nothing, taskStudentID = studentId, taskTopicID = topicId, taskDescription = description, taskGrade = Nothing }
+            insertedId <- insert conn newTask
+            case insertedId of
+                Just id -> putStrLn $ "Inserted task with ID: " ++ show id
+                Nothing -> putStrLn "Failed to insert task"
+            runApp conn
+
+        "14" -> do
+            putStrLn "Task ID: "
+            taskIdStr <- getLine
+            let taskId = read taskIdStr :: Int
+            putStrLn "Enter task grade:"
+            gradeStr <- getLine
+            let grade = read gradeStr :: Int
+            gradeTask conn taskId grade
+            putStrLn $ "Graded!"
+            runApp conn
+
+        "15" -> do
+            putStrLn "Enter task ID: "
+            taskIdStr <- getLine
+            let taskId = read taskIdStr :: Int
+            maybeTask <- getById conn taskId :: IO (Maybe Task)
+            case maybeTask of
+                Just task -> putStrLn $ "Task details: " ++ show task
+                Nothing -> putStrLn "Task not found"
+            runApp conn
+
+        "16" -> do
+            tasks <- getAll conn :: IO [Task]
+            putStrLn "All tasks: "
+            mapM_ (putStrLn . show) tasks
+            runApp conn
+
+        "17" -> do
+            putStrLn "Enter material details:"
+            putStrLn "Topic ID: "
+            topicIdStr <- getLine
+            let topicId = read topicIdStr :: Int
+
+            putStrLn "Title: "
+            title <- getLine
+
+            putStrLn "Link: "
+            link <- getLine
+
+            let newMaterial = Material { materialID = Nothing, materialTopicID = topicId, materialTitle = title, materialLink = link }
+            insertedId <- insert conn newMaterial
+            case insertedId of
+                Just id -> putStrLn $ "Inserted material with ID: " ++ show id
+                Nothing -> putStrLn "Failed to insert material"
+            runApp conn
+
+        "18" -> do
+            putStrLn "Enter material ID: "
+            materialIdStr <- getLine
+            let materialId = read materialIdStr :: Int
+            maybeMaterial <- getById conn materialId :: IO (Maybe Material)
+            case maybeMaterial of
+                Just material -> putStrLn $ "Material details: " ++ show material
+                Nothing -> putStrLn "Material not found"
+            runApp conn
+
+        "19" -> do
+            materials <- getAll conn :: IO [Material]
+            putStrLn "All materials: "
+            mapM_ (putStrLn . show) materials
+            runApp conn
+
+        "20" -> do
+            putStrLn "Enter question details:"
+            putStrLn "Student ID: "
+            studentIdStr <- getLine
+            let studentId = read studentIdStr :: Int
+
+            putStrLn "Text: "
+            text <- getLine
+
+            let newQuestion = Question { questionID = Nothing, questionStudentID = studentId, questionText = text }
+            insertedId <- insert conn newQuestion
+            case insertedId of
+                Just id -> putStrLn $ "Inserted question with ID: " ++ show id
+                Nothing -> putStrLn "Failed to insert question"
+            runApp conn
+
+        "21" -> do
+            putStrLn "Enter question ID: "
+            questionIdStr <- getLine
+            let questionId = read questionIdStr :: Int
+            maybeQuestion <- getById conn questionId :: IO (Maybe Question)
+            case maybeQuestion of
+                Just question -> putStrLn $ "Question details: " ++ show question
+                Nothing -> putStrLn "Question not found"
+            runApp conn
+
+        "22" -> do
+            putStrLn "Enter question ID to update: "
+            questionIdStr <- getLine
+            let questionId = read questionIdStr :: Int
+
+            putStrLn "New Text: "
+            newText <- getLine
+
+            let updatedQuestion = Question { questionID = Just questionId, questionStudentID = 0, questionText = newText }
+            update conn updatedQuestion
+            putStrLn "Question updated"
+            runApp conn
+
+        "23" -> do
+            questions <- getAll conn :: IO [Question]
+            putStrLn "All questions: "
+            mapM_ (putStrLn . show) questions
+            runApp conn
+
+        "24" -> do
+            putStrLn "Enter answer details:"
+            putStrLn "Question ID: "
+            questionIdStr <- getLine
+            let questionId = read questionIdStr :: Int
+
+            putStrLn "Teacher ID: "
+            teacherIdStr <- getLine
+            let teacherId = read teacherIdStr :: Int
+
+            putStrLn "Answer Text: "
+            text <- getLine
+
+            let newAnswer = Answer { answerID = Nothing, answerQuestionID = questionId, answerTeacherID = teacherId, answerText = text }
+            insertedId <- insert conn newAnswer
+            case insertedId of
+                Just id -> putStrLn $ "Inserted answer with ID: " ++ show id
+                Nothing -> putStrLn "Failed to insert answer"
+            runApp conn
+
+        "25" -> do
+            putStrLn "Enter answer ID: "
+            answerIdStr <- getLine
+            let answerId = read answerIdStr :: Int
+            maybeAnswer <- getById conn answerId :: IO (Maybe Answer)
+            case maybeAnswer of
+                Just answer -> putStrLn $ "Answer details: " ++ show answer
+                Nothing -> putStrLn "Answer not found"
+            runApp conn
+
+        "26" -> do
+            putStrLn "Enter answer ID to update: "
+            answerIdStr <- getLine
+            let answerId = read answerIdStr :: Int
+
+            putStrLn "New Answer Text: "
+            newText <- getLine
+
+            let updatedAnswer = Answer { answerID = Just answerId, answerQuestionID = 0, answerTeacherID = 0, answerText = newText }
+            update conn updatedAnswer
+            putStrLn "Answer updated"
+            runApp conn
+
+        "27" -> do
+          answers <- getAll conn :: IO [Answer]
+          putStrLn "All answers: "
+          mapM_ (putStrLn . show) answers
+          runApp conn
+
+        "28" -> do
+                putStrLn "Exiting..."
+                disconnect conn
         _ -> do
             putStrLn "Invalid choice"
             runApp conn
