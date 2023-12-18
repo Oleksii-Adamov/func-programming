@@ -1,0 +1,47 @@
+cabal-version:      2.4
+name:               task5-chat
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Oleksii-Adamov
+maintainer:         aleksey.v.adamov@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+
+extra-source-files: CHANGELOG.md
+
+executable startServer
+  main-is:             startServer.hs
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  build-depends:    base ^>=4.17.2.0,
+                      network >= 3.1 && < 3.2,
+                      containers,
+                      text,
+                      threepenny-gui,
+                      bytestring,
+                      stm
+
+executable startClient
+  main-is:             startClient.hs
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  build-depends:    base ^>=4.17.2.0,
+                      network >= 3.1 && < 3.2,
+                      containers,
+                      text,
+                      threepenny-gui,
+                      bytestring,
+                      stm
